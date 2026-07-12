@@ -1,0 +1,81 @@
+@keyframes sparkle {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: scale(0.7);
+        opacity: 0.5;
+    }
+}
+
+.sparkle {
+    animation: sparkle 1.5s infinite alternate ease-in-out;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
+}
+
+.cloud-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.cloud-layer {
+    position: absolute;
+    background-repeat: repeat-x;
+    background-size: contain;
+    will-change: transform;
+    height: 100%;
+    width: 200%;
+    animation: moveClouds 60s linear infinite;
+    background-image: url('https://filedn.eu/lXpZ97jP7n9Yc827W01M45y/clouds-transparent.png');
+}
+
+.cloud-layer1 {
+    top: -25%;
+    left: 0;
+    animation-duration: 60s;
+    animation-delay: -10s;
+    opacity: 0.8;
+}
+
+.cloud-layer2 {
+    top: -15%;
+    left: 0;
+    animation-duration: 75s;
+    animation-delay: -20s;
+    opacity: 0.6;
+}
+
+@keyframes moveClouds {
+    from {
+        transform: translateX(0%);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.shooting-star {
+    position: absolute;
+    height: 2px;
+    width: 100px;
+    border-radius: 1px;
+    opacity: 0;
+    background: linear-gradient(to right, rgba(255,255,255,0.8), rgba(255,255,200,0.5));
+    filter: blur(1px);
+    z-index: 10;
+}
+
+
+
+.ring {
+    width: 100%;
+    height: 100%;
+    border: 4px solid;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
