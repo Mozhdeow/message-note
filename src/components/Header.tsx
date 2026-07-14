@@ -128,6 +128,7 @@ function AvatarImage({
 
 export default function Header() {
     const {user, isLoading} = useUser();
+    const [liveUser, setLiveUser] = useState(user);
 
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -135,12 +136,32 @@ export default function Header() {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const isLoggedIn = Boolean(user?.isLoggedIn);
-    const canOpenPanel = user?.role === "admin" || user?.role === "support";
+    const currentUser = liveUser;
 
-    const avatarSrc = getAvatarUrl(user?.avatar)
+    const isLoggedIn = Boolean(currentUser?.isLoggedIn);
+    const canOpenPanel = currentUser?.role === "admin" || currentUser?.role === "support";
 
-    const userDisplayName = user?.username || user?.email || "User";
+    const avatarSrc = getAvatarUrl(currentUser?.avatar);
+
+    const userDisplayName = currentUser?.username || currentUser?.email || "User";
+
+    useEffect(() => {
+        setLiveUser(user);
+    }, [user]);
+
+
+    useEffect(() => {
+        const handleUserUpdated = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            setLiveUser(customEvent.detail);
+        };
+
+        window.addEventListener("message-note:user-updated", handleUserUpdated);
+
+        return () => {
+            window.removeEventListener("message-note:user-updated", handleUserUpdated);
+        };
+    }, []);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -168,7 +189,6 @@ export default function Header() {
         setIsProfileOpen(false);
         setIsMobileMenuOpen(false);
     };
-
 
 
     const handleLogout = async () => {
@@ -511,7 +531,7 @@ export default function Header() {
                                         {userDisplayName}
                                     </p>
 
-                                    <p className="text-sm uppercase text-white/40">{user?.role}</p>
+                                    <p className="text-sm uppercase text-white/40">{currentUser?.role}</p>
                                 </div>
                             </div>
                         )}

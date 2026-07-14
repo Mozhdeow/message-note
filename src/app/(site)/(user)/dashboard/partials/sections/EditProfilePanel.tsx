@@ -1,11 +1,50 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { BiImageAdd, BiSave } from "react-icons/bi";
+import React, {useEffect, useState} from "react";
+import {toast} from "sonner";
+import {BiImageAdd, BiSave} from "react-icons/bi";
 
-import type { ProfileUser } from "../ProfileTypes";
+import type {ProfileUser} from "../ProfileTypes";
 import ProfileSectionHeader from "../ProfileSectionHeader";
+import {DEFAULT_AVATAR} from "@/components/Header";
+
+
+const getApiBase = () => {
+    const apiBase = process.env.NEXT_PUBLIC_PHP_API || "";
+    return apiBase.replace(/\/process\.php$/, "").replace(/\/$/, "");
+};
+
+const getAvatarUrl = (avatar?: string | null) => {
+    if (!avatar) return DEFAULT_AVATAR;
+
+    if (avatar.startsWith("http://") || avatar.startsWith("https://")) {
+        return avatar;
+    }
+
+    if (avatar.startsWith("/images/") || avatar.startsWith("/default")) {
+        return avatar;
+    }
+
+    const cleanAvatar = avatar.replace(/^\//, "");
+    const apiBase = getApiBase();
+
+    if (!apiBase) return DEFAULT_AVATAR;
+
+    if (cleanAvatar.startsWith("actions/uploads/")) {
+        const rootBase = apiBase.replace(/\/actions$/, "");
+        return `${rootBase}/${cleanAvatar}`;
+    }
+
+    if (cleanAvatar.startsWith("uploads/")) {
+        const actionsBase = apiBase.endsWith("/actions")
+            ? apiBase
+            : `${apiBase}/actions`;
+
+        return `${actionsBase}/${cleanAvatar}`;
+    }
+
+    return `${apiBase}/${cleanAvatar}`;
+};
 
 export default function EditProfilePanel({
                                              user,
@@ -18,14 +57,14 @@ export default function EditProfilePanel({
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
-    const [avatarPreview, setAvatarPreview] = useState("/default-avatar.png");
+    const [avatarPreview, setAvatarPreview] = useState(DEFAULT_AVATAR);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         setFullName(user.full_name || "");
         setUsername(user.username || "");
         setEmail(user.email || "");
-        setAvatarPreview(user.avatar || "/default-avatar.png");
+        setAvatarPreview(getAvatarUrl(user.avatar));
         setAvatarFile(null);
     }, [user.id, user.full_name, user.username, user.email, user.avatar]);
 
@@ -129,10 +168,16 @@ export default function EditProfilePanel({
                 });
 
                 onUpdated(result.user);
+
+                window.dispatchEvent(
+                    new CustomEvent("message-note:user-updated", {
+                        detail: result.user,
+                    })
+                );
+
                 setAvatarFile(null);
                 return;
             }
-
             const message =
                 result.errors?.full_name ||
                 result.errors?.username ||
@@ -168,11 +213,15 @@ export default function EditProfilePanel({
                 <div className="rounded-3xl border border-white/10 bg-white/[0.025] p-5 backdrop-blur-md">
                     <div className="flex flex-col gap-5 md:flex-row md:items-center">
                         <div className="relative h-28 w-28 shrink-0">
-                            <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-primary/70 to-secondary/70 opacity-70 blur-md" />
+                            <div
+                                className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-primary/70 to-secondary/70 opacity-70 blur-md"/>
 
                             <img
                                 src={avatarPreview}
                                 alt="Avatar preview"
+                                onError={(event) => {
+                                    event.currentTarget.src = DEFAULT_AVATAR;
+                                }}
                                 className="relative h-full w-full rounded-[2rem] border border-white/20 object-cover"
                             />
                         </div>
@@ -185,8 +234,9 @@ export default function EditProfilePanel({
                                 Maximum file size is 2MB.
                             </p>
 
-                            <label className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-5 py-3 text-sm font-black uppercase tracking-wider text-white transition hover:bg-white/[0.12]">
-                                <BiImageAdd className="h-5 w-5" />
+                            <label
+                                className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-5 py-3 text-sm font-black uppercase tracking-wider text-white transition hover:bg-white/[0.12]">
+                                <BiImageAdd className="h-5 w-5"/>
                                 Choose Avatar
 
                                 <input
@@ -251,7 +301,7 @@ export default function EditProfilePanel({
                     className="btn-submit flex w-fit items-center gap-2 bg-primary px-8 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={loading}
                 >
-                    <BiSave className="h-5 w-5" />
+                    <BiSave className="h-5 w-5"/>
                     {loading ? "Saving..." : "Save Changes"}
                 </button>
             </form>
