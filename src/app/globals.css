@@ -4,176 +4,176 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #000711;
-  --color-secondary-background: #0a0d3f;
-  --color-text: #f3f3ff;
-  --color-primary: #a259ff;
-  --color-secondary: #23b1d8;
-  --color-third: #b733f9;
+    --color-background: #000711;
+    --color-secondary-background: #0a0d3f;
+    --color-text: #f3f3ff;
+    --color-primary: #a259ff;
+    --color-secondary: #23b1d8;
+    --color-third: #b733f9;
 
-  --font-sans: "Sora", sans-serif;
-  --font-display: "Space Grotesk", sans-serif;
+    --font-sans: "Sora", sans-serif;
+    --font-display: "Space Grotesk", sans-serif;
 }
 
 :root {
-  --background: #01070e;
-  --secondary-background: #0a0d3f;
-  --text: #f3f3ff;
-  --primary: #a259ff;
-  --secondary: #23b1d8;
-  --third: #b733f9;
+    --background: #01070e;
+    --secondary-background: #0a0d3f;
+    --text: #f3f3ff;
+    --primary: #a259ff;
+    --secondary: #23b1d8;
+    --third: #b733f9;
 
-  --font-body: "Sora", sans-serif;
-  --font-display: "Space Grotesk", sans-serif;
+    --font-body: "Sora", sans-serif;
+    --font-display: "Space Grotesk", sans-serif;
 }
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--background);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-synthesis-weight: none;
-  text-rendering: optimizeLegibility;
+    margin: 0;
+    min-height: 100vh;
+    background: var(--background);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
 }
 
 button,
 input,
 textarea,
 select {
-  font: inherit;
+    font: inherit;
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+    color: inherit;
+    text-decoration: none;
 }
 
 ::selection {
-  background: var(--primary);
-  color: white;
+    background: var(--primary);
+    color: white;
 }
 
 .font-display {
-  font-family: var(--font-display);
+    font-family: var(--font-display);
 }
 
 
 @layer components {
-  .input-login {
-    @apply w-full rounded-xl border-2 border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition placeholder:text-sm placeholder:text-white/35 focus:border-primary focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60;
-  }
+    .input-login {
+        @apply w-full rounded-xl border-2 border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition placeholder:text-sm placeholder:text-white/35 focus:border-primary focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60;
+    }
 
-  .btn-submit {
-    @apply rounded-xl px-4 py-3 font-bold text-white transition hover:scale-[1.02] hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60;
-  }
+    .btn-submit {
+        @apply rounded-xl px-4 py-3 font-bold text-white transition hover:scale-[1.02] hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60;
+    }
 
-  .link {
-    @apply text-xs! font-bold uppercase transition hover:scale-105 hover:text-white disabled:cursor-not-allowed disabled:opacity-60;
-  }
+    .link {
+        @apply text-xs! font-bold uppercase transition hover:scale-105 hover:text-white disabled:cursor-not-allowed disabled:opacity-60;
+    }
 }
 
 
 .perspective {
-  perspective: 1300px;
+    perspective: 1300px;
 }
 
 
 .shadow-primary {
-  box-shadow: 0px 0px 4px 2px white;
+    box-shadow: 0px 0px 4px 2px white;
 }
 
 
 .name {
-  position: relative;
-  display: flex;
+    position: relative;
+    display: flex;
 }
 
 .name .cosmic {
-  position: relative;
-  cursor: pointer;
-  height: var(--size, 70px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    position: relative;
+    cursor: pointer;
+    height: var(--size, 70px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .name .cosmic span {
-  font-size: inherit;
-  font-weight: 700;
-  -webkit-text-stroke: 1.5px white;
-  color: transparent;
-  transition: 0.5s;
-  font-family: monospace !important;
+    font-size: inherit;
+    font-weight: 700;
+    -webkit-text-stroke: 1.5px white;
+    color: transparent;
+    transition: 0.5s;
+    font-family: monospace !important;
 }
 
 .name .cosmic-w span {
-  font-size: inherit;
-  font-weight: 700;
-  -webkit-text-stroke: 1.5px white;
-  color: transparent;
-  transition: 0.5s;
+    font-size: inherit;
+    font-weight: 700;
+    -webkit-text-stroke: 1.5px white;
+    color: transparent;
+    transition: 0.5s;
 }
 
 .name .cosmic-w-color span {
-  font-size: inherit;
-  font-weight: 700;
-  -webkit-text-stroke: 1.5px white;
-  color: white;
-  transition: 0.5s;
+    font-size: inherit;
+    font-weight: 700;
+    -webkit-text-stroke: 1.5px white;
+    color: white;
+    transition: 0.5s;
 }
 
 .name .cosmic:hover span {
-  opacity: 0;
+    opacity: 0;
 }
 
 .name .cosmic::before {
-  content: attr(data-text);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  font-size: inherit;
-  height: 0;
-  font-weight: 700;
-  overflow: hidden;
-  transition: 0.6s ease-in-out;
-  text-align: center;
-  line-height: var(--size, 70px);
-  color: var(--color);
-  font-family: monospace;
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    font-size: inherit;
+    height: 0;
+    font-weight: 700;
+    overflow: hidden;
+    transition: 0.6s ease-in-out;
+    text-align: center;
+    line-height: var(--size, 70px);
+    color: var(--color);
+    font-family: monospace;
 }
 
 .name .cosmic:hover::before {
-  height: 100%;
-  filter: drop-shadow(0 0 2rem var(--color));
+    height: 100%;
+    filter: drop-shadow(0 0 2rem var(--color));
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(243, 243, 255, 0.55);
-  border-radius: 10px;
+    background: rgba(243, 243, 255, 0.55);
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-primary);
-  border-radius: 10px;
+    background: var(--color-primary);
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #513eb9;
+    background: #513eb9;
 }
 
 

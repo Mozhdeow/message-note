@@ -3,6 +3,7 @@
 $allowed_origins = [
     "http://localhost:3001",
     "http://localhost:8000",
+    "http://localhost:8001",
 ];
 
 $origin = $_SERVER["HTTP_ORIGIN"] ?? "";
@@ -91,6 +92,108 @@ function clean_user($user) {
         "status" => $user["status"] ?? "active",
         "isLoggedIn" => true,
     ];
+}
+
+function save_optional_uploaded_file($fieldName, $prefix, $allowedExtensions) {
+    if (!isset($_FILES[$fieldName]) || $_FILES[$fieldName]["error"] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+
+    if ($_FILES[$fieldName]["error"] !== UPLOAD_ERR_OK) {
+        response_json([
+            "success" => false,
+            "message" => "Upload failed."
+        ], 422);
+    }
+
+    $uploadDir = __DIR__ . "/uploads/";
+
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+
+    $originalName = $_FILES[$fieldName]["name"] ?? "";
+    $tmpPath = $_FILES[$fieldName]["tmp_name"] ?? "";
+    $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+    if (!in_array($ext, $allowedExtensions, true)) {
+        response_json([
+            "success" => false,
+            "message" => "Invalid file type."
+        ], 422);
+    }
+
+    $fileName = $prefix . "_" . time() . "_" . bin2hex(random_bytes(8)) . "." . $ext;
+    $targetPath = $uploadDir . $fileName;
+
+    if (!move_uploaded_file($tmpPath, $targetPath)) {
+        response_json([
+            "success" => false,
+            "message" => "Could not save uploaded file."
+        ], 500);
+    }
+
+    return "uploads/" . $fileName;
+}
+
+function delete_uploaded_file_if_exists($storedPath) {
+    if (!$storedPath) {
+        return;
+    }
+
+    if (strpos($storedPath, "http://") === 0 || strpos($storedPath, "https://") === 0) {
+        return;
+    }
+
+    $relativePath = ltrim($storedPath, "/");
+
+    if (strpos($relativePath, "uploads/") !== 0) {
+        return;
+    }
+
+    $fullPath = __DIR__ . "/" . $relativePath;
+
+    if (is_file($fullPath)) {
+        @unlink($fullPath);
+    }
+}
+
+
+function require_logged_in_user($pdo) {
+    $user_id = $_SESSION["user_id"] ?? $_SESSION["user"]["id"] ?? null;
+
+    if (!$user_id) {
+        response_json([
+            "success" => false,
+            "message" => "You must be logged in."
+        ], 401);
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT id, username, full_name, email, avatar, role, status
+        FROM users
+        WHERE id = ?
+        LIMIT 1
+    ");
+
+    $stmt->execute([(int) $user_id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user) {
+        response_json([
+            "success" => false,
+            "message" => "User not found."
+        ], 404);
+    }
+
+    if (($user["status"] ?? "active") !== "active") {
+        response_json([
+            "success" => false,
+            "message" => "Your account is not active."
+        ], 403);
+    }
+
+    return $user;
 }
 
 $action = $_POST["action"] ?? $_GET["action"] ?? "";
@@ -2567,6 +2670,63 @@ if ($action === "get_my_playlists") {
             p.cover_image,
             p.share_token,
             p.created_at,
+            p.is_active,
+
+            (
+                SELECT pt.track_name
+                FROM playlist_tracks pt
+                WHERE pt.playlist_id = p.id AND pt.is_main = 1
+                LIMIT 1
+            ) AS main_track_name,
+
+            (
+                SELECT pt.artist_name
+                FROM playlist_tracks pt
+                WHERE pt.playlist_id = p.id AND pt.is_main = 1
+                LIMIT 1
+            ) AS main_artist_name,
+
+            (
+                SELECT pt.album_name
+                FROM playlist_tracks pt
+                WHERE pt.playlist_id = p.id AND pt.is_main = 1
+                LIMIT 1
+            ) AS main_album_name,
+
+            (
+                SELECT pt.lyrics
+                FROM playlist_tracks pt
+                WHERE pt.playlist_id = p.id AND pt.is_main = 1
+                LIMIT 1
+            ) AS main_lyrics,
+
+            (
+                SELECT pt.description
+                FROM playlist_tracks pt
+                WHERE pt.playlist_id = p.id AND pt.is_main = 1
+                LIMIT 1
+            ) AS main_description,
+
+            (
+                SELECT pt.duration
+                FROM playlist_tracks pt
+                WHERE pt.playlist_id = p.id AND pt.is_main = 1
+                LIMIT 1
+            ) AS main_duration,
+
+            (
+                SELECT pt.file_url
+                FROM playlist_tracks pt
+                WHERE pt.playlist_id = p.id AND pt.is_main = 1
+                LIMIT 1
+            ) AS main_file_url,
+
+            (
+                SELECT pt.cover_image
+                FROM playlist_tracks pt
+                WHERE pt.playlist_id = p.id AND pt.is_main = 1
+                LIMIT 1
+            ) AS main_cover_image,
 
             (
                 SELECT COUNT(*)
@@ -2605,6 +2765,18 @@ if ($action === "get_my_playlists") {
             $coverImage = base_url() . "/" . ltrim($coverImage, "/");
         }
 
+$mainFileUrl = $playlist["main_file_url"];
+
+if ($mainFileUrl && strpos($mainFileUrl, "http://") !== 0 && strpos($mainFileUrl, "https://") !== 0) {
+    $mainFileUrl = base_url() . "/" . ltrim($mainFileUrl, "/");
+}
+
+$mainCoverImage = $playlist["main_cover_image"];
+
+if ($mainCoverImage && strpos($mainCoverImage, "http://") !== 0 && strpos($mainCoverImage, "https://") !== 0) {
+    $mainCoverImage = base_url() . "/" . ltrim($mainCoverImage, "/");
+}
+
         $formatted[] = [
             "id" => (int) $playlist["id"],
             "title" => $playlist["title"],
@@ -2616,7 +2788,16 @@ if ($action === "get_my_playlists") {
             "categories_count" => (int) $playlist["categories_count"],
             "tracks_count" => (int) $playlist["tracks_count"],
             "has_main_track" => ((int) $playlist["main_tracks_count"]) > 0,
-            "share_url" => "http://localhost:3001/playlist/" . $playlist["share_token"]
+            "share_url" => "http://localhost:3001/playlist/" . $playlist["share_token"],
+            "is_active" => (int) $playlist["is_active"],
+            "main_track_name" => $playlist["main_track_name"],
+            "main_artist_name" => $playlist["main_artist_name"],
+            "main_album_name" => $playlist["main_album_name"],
+            "main_lyrics" => $playlist["main_lyrics"],
+            "main_description" => $playlist["main_description"],
+            "main_duration" => $playlist["main_duration"] ? (int) $playlist["main_duration"] : 0,
+            "main_file_url" => $mainFileUrl,
+            "main_cover_image" => $mainCoverImage,
         ];
     }
 
@@ -2852,6 +3033,367 @@ if ($action === "get_public_playlist") {
 }
 
 
+if ($action === "delete_my_playlist") {
+    $user = require_logged_in_user($pdo);
+
+    $playlistId = intval($_POST["playlist_id"] ?? 0);
+
+    if ($playlistId <= 0) {
+        response_json([
+            "success" => false,
+            "message" => "Invalid playlist."
+        ], 400);
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT id, user_id, cover_image
+            FROM playlists
+            WHERE id = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$playlistId]);
+        $playlist = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$playlist || intval($playlist["user_id"]) !== intval($user["id"])) {
+            response_json([
+                "success" => false,
+                "message" => "Playlist not found."
+            ], 404);
+        }
+
+        $trackStmt = $pdo->prepare("
+            SELECT file_url, cover_image
+            FROM playlist_tracks
+            WHERE playlist_id = ?
+        ");
+        $trackStmt->execute([$playlistId]);
+        $tracks = $trackStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $pdo->beginTransaction();
+
+        $pdo->prepare("DELETE FROM opened_playlists WHERE playlist_id = ?")->execute([$playlistId]);
+        $pdo->prepare("DELETE FROM playlist_tracks WHERE playlist_id = ?")->execute([$playlistId]);
+        $pdo->prepare("DELETE FROM categories WHERE playlist_id = ?")->execute([$playlistId]);
+        $pdo->prepare("DELETE FROM playlists WHERE id = ? AND user_id = ?")->execute([$playlistId, $user["id"]]);
+
+        $pdo->commit();
+
+        $files = [];
+
+        if (!empty($playlist["cover_image"])) {
+            $files[] = $playlist["cover_image"];
+        }
+
+        foreach ($tracks as $track) {
+            if (!empty($track["file_url"])) {
+                $files[] = $track["file_url"];
+            }
+
+            if (!empty($track["cover_image"])) {
+                $files[] = $track["cover_image"];
+            }
+        }
+
+        foreach ($files as $file) {
+            $fileName = basename($file);
+            $path = __DIR__ . "/uploads/" . $fileName;
+
+            if ($fileName && file_exists($path) && is_file($path)) {
+                @unlink($path);
+            }
+        }
+
+        response_json([
+            "success" => true,
+            "message" => "Playlist deleted successfully."
+        ]);
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        response_json([
+            "success" => false,
+            "message" => "Could not delete playlist."
+        ], 500);
+    }
+}
+
+if ($action === "update_my_playlist") {
+    $user = require_logged_in_user($pdo);
+
+    $playlistId = intval($_POST["playlist_id"] ?? 0);
+    $title = trim($_POST["title"] ?? "");
+    $receiverName = trim($_POST["receiver_name"] ?? "");
+    $receiverMessage = trim($_POST["receiver_message"] ?? "");
+    $isActive = intval($_POST["is_active"] ?? 1);
+
+    $mainTrackName = trim($_POST["main_track_name"] ?? "");
+    $mainArtistName = trim($_POST["main_artist_name"] ?? "");
+    $mainAlbumName = trim($_POST["main_album_name"] ?? "");
+    $mainLyrics = trim($_POST["main_lyrics"] ?? "");
+    $mainDescription = trim($_POST["main_description"] ?? "");
+    $mainDuration = intval($_POST["main_duration"] ?? 0);
+
+    if ($playlistId <= 0) {
+        response_json([
+            "success" => false,
+            "message" => "Invalid playlist."
+        ], 400);
+    }
+
+    if ($title === "") {
+        response_json([
+            "success" => false,
+            "message" => "Playlist title is required."
+        ], 400);
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT id, user_id, cover_image
+            FROM playlists
+            WHERE id = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$playlistId]);
+        $playlist = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$playlist || intval($playlist["user_id"]) !== intval($user["id"])) {
+            response_json([
+                "success" => false,
+                "message" => "Playlist not found."
+            ], 404);
+        }
+
+        $mainStmt = $pdo->prepare("
+            SELECT id, file_url, cover_image
+            FROM playlist_tracks
+            WHERE playlist_id = ? AND is_main = 1
+            LIMIT 1
+        ");
+        $mainStmt->execute([$playlistId]);
+        $mainTrack = $mainStmt->fetch(PDO::FETCH_ASSOC);
+
+        $playlistCoverPath = save_optional_uploaded_file("cover_image", "playlist_cover", ["jpg", "jpeg", "png", "webp", "gif"]);
+        $mainTrackFilePath = save_optional_uploaded_file("main_track_file", "main_track", ["mp3", "m4a", "wav", "ogg", "webm", "flac", "aac"]);
+        $mainTrackCoverPath = save_optional_uploaded_file("main_track_cover", "main_track_cover", ["jpg", "jpeg", "png", "webp", "gif"]);
+
+        $pdo->beginTransaction();
+
+        $playlistFields = [
+            "title = ?",
+            "receiver_name = ?",
+            "receiver_message = ?",
+            "is_active = ?",
+            "updated_at = NOW()"
+        ];
+
+        $playlistValues = [
+            $title,
+            $receiverName !== "" ? $receiverName : null,
+            $receiverMessage !== "" ? $receiverMessage : null,
+            $isActive
+        ];
+
+        if ($playlistCoverPath) {
+            $playlistFields[] = "cover_image = ?";
+            $playlistValues[] = $playlistCoverPath;
+        }
+
+        $playlistValues[] = $playlistId;
+        $playlistValues[] = $user["id"];
+
+        $updatePlaylist = $pdo->prepare("
+            UPDATE playlists
+            SET " . implode(", ", $playlistFields) . "
+            WHERE id = ? AND user_id = ?
+        ");
+
+        $updatePlaylist->execute($playlistValues);
+
+        if ($mainTrack) {
+            $mainFields = [
+                "track_name = ?",
+                "artist_name = ?",
+                "album_name = ?",
+                "lyrics = ?",
+                "description = ?",
+                "duration = ?"
+            ];
+
+            $mainValues = [
+                $mainTrackName !== "" ? $mainTrackName : "Main Music",
+                $mainArtistName !== "" ? $mainArtistName : "Unknown Artist",
+                $mainAlbumName !== "" ? $mainAlbumName : "Unknown Album",
+                $mainLyrics,
+                $mainDescription,
+                $mainDuration
+            ];
+
+            if ($mainTrackFilePath) {
+                $mainFields[] = "file_url = ?";
+                $mainValues[] = $mainTrackFilePath;
+            }
+
+            if ($mainTrackCoverPath) {
+                $mainFields[] = "cover_image = ?";
+                $mainValues[] = $mainTrackCoverPath;
+            }
+
+            $mainFields[] = "updated_at = NOW()";
+
+            $mainValues[] = $playlistId;
+            $mainValues[] = $mainTrack["id"];
+
+            $updateMain = $pdo->prepare("
+                UPDATE playlist_tracks
+                SET " . implode(", ", $mainFields) . "
+                WHERE playlist_id = ? AND id = ?
+            ");
+
+            $updateMain->execute($mainValues);
+        } elseif ($mainTrackFilePath) {
+            $insertMain = $pdo->prepare("
+                INSERT INTO playlist_tracks (
+                    playlist_id,
+                    category_id,
+                    is_main,
+                    track_name,
+                    artist_name,
+                    album_name,
+                    file_url,
+                    cover_image,
+                    lyrics,
+                    description,
+                    duration,
+                    sort_order
+                )
+                VALUES (?, NULL, 1, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            ");
+
+            $insertMain->execute([
+                $playlistId,
+                $mainTrackName !== "" ? $mainTrackName : "Main Music",
+                $mainArtistName !== "" ? $mainArtistName : "Unknown Artist",
+                $mainAlbumName !== "" ? $mainAlbumName : "Unknown Album",
+                $mainTrackFilePath,
+                $mainTrackCoverPath,
+                $mainLyrics,
+                $mainDescription,
+                $mainDuration
+            ]);
+        }
+
+        $pdo->commit();
+
+        if ($playlistCoverPath && !empty($playlist["cover_image"])) {
+            delete_uploaded_file_if_exists($playlist["cover_image"]);
+        }
+
+        if ($mainTrack && $mainTrackFilePath && !empty($mainTrack["file_url"])) {
+            delete_uploaded_file_if_exists($mainTrack["file_url"]);
+        }
+
+        if ($mainTrack && $mainTrackCoverPath && !empty($mainTrack["cover_image"])) {
+            delete_uploaded_file_if_exists($mainTrack["cover_image"]);
+        }
+
+        response_json([
+            "success" => true,
+            "message" => "Playlist updated successfully."
+        ]);
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        response_json([
+            "success" => false,
+            "message" => "Database error: " . $e->getMessage()
+        ], 500);
+    }
+}
+
+if ($action === "change_my_playlist_password") {
+    $user = require_logged_in_user($pdo);
+
+    $playlistId = intval($_POST["playlist_id"] ?? 0);
+    $password = trim($_POST["password"] ?? "");
+    $confirmPassword = trim($_POST["confirm_password"] ?? "");
+
+    if ($playlistId <= 0) {
+        response_json([
+            "success" => false,
+            "message" => "Invalid playlist."
+        ], 400);
+    }
+
+    if ($password === "") {
+        response_json([
+            "success" => false,
+            "message" => "New password is required."
+        ], 400);
+    }
+
+    if (strlen($password) < 4) {
+        response_json([
+            "success" => false,
+            "message" => "Password must be at least 4 characters."
+        ], 400);
+    }
+
+    if ($password !== $confirmPassword) {
+        response_json([
+            "success" => false,
+            "message" => "Passwords do not match."
+        ], 400);
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT id, user_id
+            FROM playlists
+            WHERE id = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$playlistId]);
+        $playlist = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$playlist || intval($playlist["user_id"]) !== intval($user["id"])) {
+            response_json([
+                "success" => false,
+                "message" => "Playlist not found."
+            ], 404);
+        }
+
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+        $update = $pdo->prepare("
+            UPDATE playlists
+            SET access_password = ?,
+                updated_at = NOW()
+            WHERE id = ? AND user_id = ?
+        ");
+
+        $update->execute([
+            $passwordHash,
+            $playlistId,
+            $user["id"]
+        ]);
+
+        response_json([
+            "success" => true,
+            "message" => "Playlist password changed successfully."
+        ]);
+    } catch (Exception $e) {
+        response_json([
+            "success" => false,
+            "message" => "Could not change playlist password."
+        ], 500);
+    }
+}
 
 if ($action === "get_category_tracks") {
     $category_id = (int) post_value("category_id", get_value("category_id", 0));

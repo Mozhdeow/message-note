@@ -430,7 +430,7 @@ export default function Header() {
                         ) : (
                             <>
                                 <Link
-                                    href="/login"
+                                    href="/login?form=login"
                                     className="group flex items-center text-sm font-medium tracking-wide text-white transition-colors hover:text-neutral-200"
                                 >
                                     <span className="font-semibold uppercase">Login</span>
@@ -451,7 +451,7 @@ export default function Header() {
                                 </Link>
 
                                 <Link
-                                    href="/register"
+                                    href="/login?form=register"
                                     className="rounded-full bg-white px-6 py-2 text-[12px] font-bold uppercase tracking-wider  shadow-[0_4px_12px_rgba(255,255,255,0.15)] text-background!
                                     transition-all hover:bg-neutral-200 active:scale-95">
                                     Get Started
@@ -463,7 +463,7 @@ export default function Header() {
                 <div className="flex items-center space-x-3 lg:hidden">
                     {!isLoading && !isLoggedIn && (
                         <Link
-                            href="/login"
+                            href="/login?form=login"
                             className="rounded-full bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-black"
                         >
                             Login
@@ -635,7 +635,7 @@ export default function Header() {
                             ) : (
                                 <div className="flex flex-col space-y-3 pt-2">
                                     <Link
-                                        href="/login"
+                                        href="/login?form=login"
                                         onClick={closeAllMenus}
                                         className="flex w-full items-center justify-between rounded-xl border border-white/5 bg-white/5 p-3 text-left"
                                     >
