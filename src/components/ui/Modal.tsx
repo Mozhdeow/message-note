@@ -47,9 +47,8 @@ export default function Modal({
 
         if (!overlay || !desktop || !mobile) return;
 
-        // 🎯 این خطوط پایه‌ریزی دقیق انیمیشن‌ها هستن
-        gsap.set(desktop, {xPercent: -50, yPercent: -50}); // فقط برای دسکتاپ
-        gsap.set(mobile, {yPercent: 0}); // ریست کردن موبایل
+        gsap.set(desktop, {xPercent: -50, yPercent: -50});
+        gsap.set(mobile, {yPercent: 0});
 
         if (isFirstRender.current) {
             isFirstRender.current = false;
@@ -60,7 +59,7 @@ export default function Modal({
                     opacity: 0
                 });
                 gsap.set(desktop, {scale: 0.85, y: -40});
-                gsap.set(mobile, {y: "100%"}); // موبایل میره پایین صفحه
+                gsap.set(mobile, {y: "100%"});
                 return;
             }
         }
@@ -105,7 +104,7 @@ export default function Modal({
 
             <div ref={desktopRef} className={`hidden sm:flex flex-col justify-between fixed top-1/2 left-1/2  pointer-events-auto rounded-xl bg-background
                 py-8 px-10 max-w-3xl max-h-[80%] min-w-[500px] overflow-hidden border-2 border-background
-                before:content-[''] before:absolute before:inset-0 before:bg-black/40 bg-[url('/images/modal-bg.png')] bg-cover bg-center bg-no-repeat`}
+                before:content-[''] before:absolute before:inset-0 before:bg-black/60 bg-[url('/images/modal-bg.png')] bg-cover bg-center bg-no-repeat`}
                  style={{zIndex: 1910}}>
                 <div className={`flex items-center z-10 ${title ? "justify-between" : "justify-end"} mb-4`}>
                     {title && <TextShadow text={truncateText(title, 15)} className="text-4xl block"/>}

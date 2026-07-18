@@ -83,10 +83,10 @@ function Rectangle({
                             </Link>
                         }
                     >
-                        <div className="lyrics-scroll max-h-[55vh] overflow-y-auto px-6">
+                        <div className="lyrics-scroll min-h-[10vh] max-h-[60vh] overflow-y-auto px-6 flex items-center justify-center">
                             {description && (
                                 description.split('\n').map((val, index) => (
-                                    <p key={index} className="text-right mb-2 text-lg font-vazir text-gray-200">
+                                    <p key={index} className="text-center mb-2 text-lg font-vazir text-gray-200">
                                         {val}
                                     </p>
                                 ))

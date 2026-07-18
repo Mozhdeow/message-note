@@ -2252,9 +2252,6 @@ if ($action === "close_my_ticket") {
 
 
 
-// ---------------------------------------------------------
-// منطق ساخت پلی‌لیست شخصی (Create Playlist)
-// ---------------------------------------------------------
 if ($action === "create_playlist") {
     if (!isset($_SESSION["user_id"])) {
         response_json([

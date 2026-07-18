@@ -38,7 +38,11 @@ function showValidationToasts<T extends Record<string, any>>(
 
 export default function AuthCard() {
 
+    const router = useRouter();
+
     const [form, setForm] = useState<FormType>("login");
+    const [checkingAuth, setCheckingAuth] = useState(true);
+
     const cardRef = useRef<HTMLDivElement>(null);
 
     const changeForm = async (f: FormType) => {
@@ -60,6 +64,58 @@ export default function AuthCard() {
             console.error(e);
         }
     };
+
+    useEffect(() => {
+        let ignore = false;
+
+        const checkLoggedIn = async () => {
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_PHP_API}/process.php`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    credentials: "include",
+                    body: new URLSearchParams({
+                        action: "status",
+                    }).toString(),
+                });
+
+                const text = await res.text();
+
+                let result;
+
+                try {
+                    result = JSON.parse(text);
+                } catch {
+                    console.error("Invalid auth status response:", text);
+                    if (!ignore) setCheckingAuth(false);
+                    return;
+                }
+
+                if (!ignore && result.success && result.isLoggedIn) {
+                    router.replace("/dashboard/profile?tab=overview");
+                    return;
+                }
+
+                if (!ignore) {
+                    setCheckingAuth(false);
+                }
+            } catch (error) {
+                console.error(error);
+
+                if (!ignore) {
+                    setCheckingAuth(false);
+                }
+            }
+        };
+
+        checkLoggedIn();
+
+        return () => {
+            ignore = true;
+        };
+    }, [router]);
 
     useEffect(() => {
         const loadFormFromCookie = async () => {
@@ -99,6 +155,14 @@ export default function AuthCard() {
         if (form === "register") tl.to(cardRef.current, {rotateY: -90, rotateX: 0});
         if (form === "forgot") tl.to(cardRef.current, {rotateX: 90, rotateY: 0});
     }, [form]);
+
+    if (checkingAuth) {
+        return (
+            <div className="flex min-h-[60vh] w-full items-center justify-center text-sm font-bold text-white/50">
+                Checking account...
+            </div>
+        );
+    }
 
     return (
         <div className="flex items-center justify-center w-full min-h-[60vh]">
@@ -213,7 +277,14 @@ function Login({onGoRegister, onGoForgot}: Props) {
                     id: loadingToast,
                 });
 
-                router.push("/dashboard/profile");
+                window.dispatchEvent(
+                    new CustomEvent("message-note:user-updated", {
+                        detail: result.user,
+                    })
+                );
+
+                router.replace("/dashboard/profile?tab=overview");
+                router.refresh();
                 return;
             }
 
@@ -350,6 +421,16 @@ function Register({ onGoLogin }: Props) {
             let result: {
                 success?: boolean;
                 message?: string;
+                user?: {
+                    id: number;
+                    username: string;
+                    full_name?: string | null;
+                    email: string;
+                    avatar?: string | null;
+                    role?: string;
+                    status?: string;
+                    isLoggedIn?: boolean;
+                };
                 errors?: {
                     username?: string;
                     email?: string;
@@ -377,7 +458,17 @@ function Register({ onGoLogin }: Props) {
                 });
 
                 reset();
-                router.push("/dashboard/profile");
+
+                if (result.user) {
+                    window.dispatchEvent(
+                        new CustomEvent("message-note:user-updated", {
+                            detail: result.user,
+                        })
+                    );
+                }
+
+                router.replace("/dashboard/profile?tab=overview");
+                router.refresh();
                 return;
             }
 

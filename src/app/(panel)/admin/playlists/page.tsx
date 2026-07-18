@@ -522,7 +522,7 @@ export default function AdminPlaylistsPage() {
                                     {row.receiver_name ? `For ${row.receiver_name}` : "No receiver"}
                                 </p>
 
-                                <p className="mt-1 line-clamp-1 text-xs text-white/35">
+                                <p className="mt-1 line-clamp-1 text-xs text-white/35 max-w-48">
                                     {row.receiver_message || "No personal message."}
                                 </p>
                             </div>
@@ -691,7 +691,7 @@ export default function AdminPlaylistsPage() {
                                     {row.receiver_name ? `For ${row.receiver_name}` : "No receiver"}
                                 </p>
 
-                                <p className="mt-1 line-clamp-1 text-xs text-white/35">
+                                <p className="mt-1 line-clamp-1 text-xs text-white/35 max-w-72">
                                     {row.receiver_message || "No personal message."}
                                 </p>
                             </div>

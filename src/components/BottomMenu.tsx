@@ -14,8 +14,8 @@ const BottomMenu = () => {
     const menu = [
         {label: 'home', icon: home, url: '/'},
         {label: 'login', icon: login, url: '/login'},
-        {label: 'bio', icon: biography, url: '/biography'},
-        {label: 'playlists', icon: playlist, url: '/playlist'},
+        {label: 'about', icon: biography, url: '/about-us'},
+        {label: 'playlists', icon: playlist, url: '/dashboard/profile?tab=my-playlists'},
     ]
 
     const containerRef = useRef<HTMLDivElement>(null);

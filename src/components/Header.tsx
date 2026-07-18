@@ -145,7 +145,9 @@ export default function Header() {
 
     const userDisplayName = currentUser?.username || currentUser?.email || "User";
 
+
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLiveUser(user);
     }, [user]);
 
@@ -450,7 +452,7 @@ export default function Header() {
                         ) : (
                             <>
                                 <Link
-                                    href="/login?form=login"
+                                    href="/login"
                                     className="group flex items-center text-sm font-medium tracking-wide text-white transition-colors hover:text-neutral-200"
                                 >
                                     <span className="font-semibold uppercase">Login</span>
@@ -483,7 +485,7 @@ export default function Header() {
                 <div className="flex items-center space-x-3 lg:hidden">
                     {!isLoading && !isLoggedIn && (
                         <Link
-                            href="/login?form=login"
+                            href="/login"
                             className="rounded-full bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-black"
                         >
                             Login

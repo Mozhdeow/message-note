@@ -99,16 +99,17 @@ export default function HeroSection() {
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                     <Link
-                        data-hero="cta"
+                        // data-hero="cta"
                         href="/dashboard/profile?tab=create-playlist"
-                        className="group inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-3 text-sm font-black uppercase tracking-wider text-black! shadow-[0_12px_40px_rgba(255,255,255,0.18)] transition hover:bg-primary hover:text-white"
+                        className="group inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-3 text-sm font-black uppercase tracking-wider text-black!
+                        shadow-[0_12px_40px_rgba(255,255,255,0.18)] transition hover:bg-primary hover:text-white!"
                     >
                         Create Playlist
                         <BsArrowUpRight className="h-4 w-4 transition group-hover:translate-x-1 group-hover:-translate-y-1" />
                     </Link>
 
                     <Link
-                        data-hero="cta"
+                        // data-hero="cta"
                         href="#how-it-works"
                         className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-8 py-3 text-sm font-black uppercase tracking-wider text-white backdrop-blur-md transition hover:bg-white/10"
                     >
